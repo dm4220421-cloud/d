@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گەردوونی خۆشەویستی 🌌</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #020204;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .intro-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            background: rgba(12, 12, 16, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 35px 25px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 77, 109, 0.3);
+            box-shadow: 0 0 30px rgba(255, 77, 109, 0.15);
+            text-align: center;
+            max-width: 400px;
+            width: 85%;
+            color: #fff;
+            transition: opacity 0.6s ease;
+        }
+        .intro-title {
+            color: #ff4d6d;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+        }
+        .start-btn {
+            background: #ff4d6d;
+            color: white;
+            padding: 14px 35px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(255, 77, 109, 0.4);
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+        .start-btn:hover {
+            background: #d63350;
+            transform: scale(1.05);
+        }
+        .fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .galaxy-text {
+            position: absolute;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            white-space: nowrap;
+            text-shadow: 0 0 8px rgba(255, 77, 109, 1), 0 0 2px #000;
+            pointer-events: none;
+            z-index: 5;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        /* ڕێنمایی کاتی بۆ بەکارهێنەر */
+        #hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            z-index: 4;
+            pointer-events: none;
+            background: rgba(0,0,0,0.4);
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="hint">پەنجەت ڕاکێشە بۆ جوڵاندنی گەردوونەکە و زووم بکە 👆</div>
+
+    <div class="intro-overlay" id="welcomeCard">
+        <div class="intro-title">تەنها بۆ تۆ 🌌</div>
+        <p style="margin: 0 0 25px 0; font-size: 15px; line-height: 1.7; color: #ddd;">بۆ دۆزینەوەی گەردوونی هاوبەشمان و بیستنی ئاوازەکە، کلیک بکە...</p>
+        <button class="start-btn" onclick="initInteractiveUniverse()">چوونە ناو گەردوون 🎶</button>
+    </div>
+
+    <audio id="bgMusic" loop src="https://files.catbox.moe/w8f553.mp3"></audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        function initInteractiveUniverse() {
+            // لێدانی گۆرانیەکە
+            document.getElementById('bgMusic').play().catch(e => console.log(e));
+            
+            // لابردنی کاردەکە
+            document.getElementById('welcomeCard').classList.add('fade-out');
+            setTimeout(() => { 
+                document.getElementById('welcomeCard').remove(); 
+                document.getElementById('hint').style.display = 'block';
+            }, 500);
+
+            build3DSystem();
+        }
+
+        function build3DSystem() {
+            const container = document.getElementById('canvas-container');
+            
+            // 1. Scene & Camera
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020204, 0.01);
+
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 22);
+
+            // 2. Renderer
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // 3. Orbit Controls (بۆ ئەوەی بە دەست بیجوڵێنیت و زووم بکەیت)
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 40;
+            controls.minDistance = 5;
+
+            // 4. دروستکردنی خۆر لە ناوەڕاست (Sun)
+            const sunGeo = new THREE.SphereGeometry(2, 32, 32);
+            const sunMat = new THREE.MeshBasicMaterial({ color: 0xffdd67 });
+            const sun = new THREE.Mesh(sunGeo, sunMat);
+            scene.add(sun);
+
+            // ڕووناکی بۆ سەر هەسارەکان
+            const pointLight = new THREE.PointLight(0xffffff, 2, 100);
+            scene.add(pointLight);
+
+            // 5. دروستکردنی هەسارەکان (Planets)
+            const planetsData = [
+                { radius: 0.4, distance: 4, speed: 0.02, color: 0x888888 }, // عەتارد
+                { radius: 0.7, distance: 6, speed: 0.015, color: 0xe3bb76 }, // زوهرا
+                { radius: 0.8, distance: 9, speed: 0.01, color: 0x4b70dd, hasMoon: true }, // زەوی و مانگ
+                { radius: 0.5, distance: 13, speed: 0.008, color: 0xc1440e } // مەریخ
+            ];
+
+            const planets = [];
+            const planetMeshes = [];
+
+            planetsData.forEach(data => {
+                const pivot = new THREE.Group();
+                scene.add(
